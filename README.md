@@ -51,7 +51,7 @@ CarFreeks is a web app built with Flask and SQLite. Docker Compose runs the web 
 4. Start the services:
 
    ```sh
-   docker compose up -d --build
+   docker compose -f docker-compose.yml up -d --build
    ```
 
 5. Open `http://localhost:5060` **on the computer running Docker** and select **Create an account**. The first account has owner access.
@@ -73,7 +73,7 @@ The published host port and the app's internal container port are different: for
 ## Deploy with Portainer
 
 1. In Portainer, go to **Stacks → Add stack → Git Repository**.
-2. Use this repository URL: `https://github.com/ChrisFinwall/CarFreeks.git`, branch `main`, and Compose path `compose.yaml`.
+2. Use this repository URL: `https://github.com/ChrisFinwall/CarFreeks.git`, branch `main`, and Compose path `docker-compose.yml`.
 3. If the repository is private, configure Portainer's Git authentication with a GitHub token that has read-only access to the repository contents.
 4. Add stack environment variables:
    - `CARFREEKS_SECRET_KEY`: generate a value with `openssl rand -hex 32` on the Ubuntu server and paste it into Portainer's stack environment.
@@ -82,6 +82,8 @@ The published host port and the app's internal container port are different: for
    - `CARFREEKS_COOKIE_SECURE`: `false` for trusted-LAN HTTP; set `true` only when HTTPS is configured.
 5. Deploy the stack and wait for the `carfreeks` service health check.
 6. From another device on the LAN, open `http://<ubuntu-server-LAN-IP>:5060` (for example, `http://192.168.1.29:5060`) and create your account.
+
+The previous `compose.yaml` filename is retained as an identical compatibility copy, so an existing Portainer stack configured with that path can continue pulling updates without changing its Compose path. New stacks should use `docker-compose.yml`.
 
 If access from other LAN devices is enabled, allow the chosen port through the Ubuntu firewall only from your LAN. Do not expose plain HTTP directly to the public internet; use a VPN or configure an HTTPS reverse proxy. If a host port is already allocated, choose another `CARFREEKS_PORT` and use that port in the browser.
 
@@ -110,7 +112,7 @@ To restore, sign in to the destination CarFreeks instance as a household owner, 
 
 ### Full Docker data backup
 
-The in-app backup is convenient for moving garage data. For disaster recovery of the entire installation—including the SQLite database, all accounts, and receipt storage—back up the `carfreeks-data` Docker volume as well. Stop both services first so the database and files are consistent. Run these commands from the directory containing `compose.yaml`:
+The in-app backup is convenient for moving garage data. For disaster recovery of the entire installation—including the SQLite database, all accounts, and receipt storage—back up the `carfreeks-data` Docker volume as well. Stop both services first so the database and files are consistent. Run these commands from the directory containing `docker-compose.yml`:
 
 ```sh
 container_id="$(docker compose ps -q carfreeks)"
