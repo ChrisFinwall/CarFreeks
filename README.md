@@ -7,7 +7,7 @@ CarFreeks is a self-hosted vehicle garage for tracking cars, mileage, maintenanc
 1. Copy `.env.example` to `.env`.
 2. Set `CARFREEKS_SECRET_KEY` to a randomly generated value (for example, `openssl rand -hex 32`). The example file binds the site to `127.0.0.1` only; change `CARFREEKS_BIND_ADDRESS` if you intentionally want network access.
 3. Start the app with `docker compose up -d --build`.
-4. Open `http://localhost:8080` (or `http://localhost:<CARFREEKS_PORT>` if you changed the port) on the Docker host and choose **Create an account**.
+4. Open `http://localhost:5060` (or `http://localhost:<CARFREEKS_PORT>` if you changed the port) on the Docker host and choose **Create an account**.
 
 New accounts can be created anytime from the sign-in page. Each account has its own private garage and can only view its own cars, service records, and receipt files. After signing in, use **Account** in the header to change the username or password; changing sign-in details does not affect vehicle records. Existing databases keep their current accounts and vehicle data.
 
@@ -26,14 +26,14 @@ To enable Discord notifications, create a webhook in your Discord channel's **Ed
 
 Docker Compose starts a dedicated `carfreeks-notifications` worker. It checks for date- or mileage-due reminders every five minutes (configurable using `CARFREEKS_NOTIFICATION_INTERVAL_SECONDS`) and sends a single notification per occurrence; completing a repeating reminder re-arms it. The notification worker must be running for automatic Discord reminders. For a manual deployment outside Compose, run `python notifications.py` alongside the web server.
 
-By default, Docker publishes the app only on the host's loopback interface (`127.0.0.1`). This makes `localhost` work on the computer running Docker without exposing the app to your network. If you open Portainer in a browser on that same computer, use `http://localhost:8080`. If Portainer or Docker is on a different server, `localhost` refers to that server; open the browser on the server or deliberately change the port binding before using a different access method.
+By default, Docker publishes the app on host port `5060`, bound only to the host's loopback interface (`127.0.0.1`). This makes `localhost` work on the computer running Docker without exposing the app to your network. If you open Portainer in a browser on that same computer, use `http://localhost:5060`. To access it from another device on your LAN, set `CARFREEKS_BIND_ADDRESS=0.0.0.0` in the stack environment and open `http://<docker-host-LAN-IP>:5060`. If Portainer or Docker is on a different server, `localhost` refers to that server. Restrict the published port to your LAN in the firewall; don't expose plain HTTP directly to the public internet.
 
 ## Deploy in Portainer
 
 1. Choose **Stacks → Add stack** and deploy from this repository (or upload the Compose file and application files).
 2. Add a long, random `CARFREEKS_SECRET_KEY` under the stack's environment variables. Set `CARFREEKS_PORT` if desired.
 3. Deploy the stack and wait for the `carfreeks` service health check to pass.
-4. Open `http://localhost:8080` in a browser running on the Docker host and choose **Create an account**. Portainer's repository setting is only how it fetches the project source; the published app address is the host port. With the default loopback binding, other computers cannot connect to it. Configure HTTPS at a reverse proxy only if you intentionally expose the service, and set `CARFREEKS_COOKIE_SECURE=true` when HTTPS is enabled.
+4. Open `http://localhost:5060` in a browser running on the Docker host and choose **Create an account**. To access it from another device, set `CARFREEKS_BIND_ADDRESS=0.0.0.0` and open `http://<docker-host-LAN-IP>:5060`. Portainer's repository setting is only how it fetches the project source; the published app address is the host port. With the default loopback binding, other computers cannot connect to it. Configure HTTPS at a reverse proxy only if you intentionally expose the service, and set `CARFREEKS_COOKIE_SECURE=true` when HTTPS is enabled.
 
 Compose creates the named `carfreeks-data` volume for the SQLite database and receipt uploads. Both the app and reminder worker share the volume. It survives container replacement and stack updates as long as the volume is retained.
 
