@@ -40,21 +40,13 @@ CarFreeks is a web app built with Flask and SQLite. Docker Compose runs the web 
    cp .env.example .env
    ```
 
-3. Generate a private application key:
-
-   ```sh
-   openssl rand -hex 32
-   ```
-
-   Put the generated value in `.env` as `CARFREEKS_SECRET_KEY`. Keep the same key when you update or restore the app. Do not commit `.env` or share the key.
-
-4. Start the services:
+3. Start the services:
 
    ```sh
    docker compose -f docker-compose.yml up -d --build
    ```
 
-5. Open `http://localhost:5060` **on the computer running Docker** and select **Create an account**. The first account has owner access.
+4. Open `http://localhost:5060` **on the computer running Docker** and select **Create an account**. The first account has owner access.
 
 Check service status with `docker compose ps`, or view logs with `docker compose logs -f carfreeks carfreeks-notifications`. Wait for the web app health check to pass.
 
@@ -62,7 +54,6 @@ Check service status with `docker compose ps`, or view logs with `docker compose
 
 | Variable | Default | Purpose |
 |---|---:|---|
-| `CARFREEKS_SECRET_KEY` | Required | Protects sessions and form security. Generate with `openssl rand -hex 32`; keep it private and persistent. |
 | `CARFREEKS_PORT` | `5060` | Host port used in the browser. Change it if another service already uses 5060. |
 | `CARFREEKS_BIND_ADDRESS` | `127.0.0.1` | Host interface to publish on. The default allows access only from the Docker host. Use `0.0.0.0` only if you intentionally need LAN access. |
 | `CARFREEKS_COOKIE_SECURE` | `false` | Set to `true` when HTTPS is provided by a reverse proxy. |
@@ -76,7 +67,6 @@ The published host port and the app's internal container port are different: for
 2. Use this repository URL: `https://github.com/ChrisFinwall/CarFreeks.git`, branch `main`, and Compose path `docker-compose.yml`.
 3. If the repository is private, configure Portainer's Git authentication with a GitHub token that has read-only access to the repository contents.
 4. Add stack environment variables:
-   - `CARFREEKS_SECRET_KEY`: generate a value with `openssl rand -hex 32` on the Ubuntu server and paste it into Portainer's stack environment.
    - `CARFREEKS_PORT`: `5060`, or another unused host port.
    - `CARFREEKS_BIND_ADDRESS`: `0.0.0.0` if clients on your LAN need to connect; otherwise leave it unset for the safer loopback default.
    - `CARFREEKS_COOKIE_SECURE`: `false` for trusted-LAN HTTP; set `true` only when HTTPS is configured.
@@ -123,7 +113,7 @@ docker run --rm --volumes-from "$container_id" \
 docker compose start carfreeks carfreeks-notifications
 ```
 
-Keep the archive and the `CARFREEKS_SECRET_KEY` safe. Do not remove the named volume when updating or redeploying the stack.
+Keep the archive safe. Do not remove the named volume when updating or redeploying the stack; it also preserves the automatically generated signing key.
 
 To restore that archive, stop both services and extract it into the existing data volume. This replaces files with matching names but does not remove unrelated files already in the volume:
 
@@ -143,7 +133,7 @@ docker compose start carfreeks carfreeks-notifications
 - Discord webhook URLs are secrets. They are excluded from the Excel workbook but included in the private full-backup ZIP so Discord notifications can be restored.
 - Receipt files are limited to 10 MB each and supported formats are PDF, JPEG, PNG, WebP, and HEIC.
 - The default Docker binding is local-only (`127.0.0.1`). Enabling `0.0.0.0` makes the host port reachable on its network interfaces; use firewall rules and HTTPS/VPN practices appropriate to your network.
-- The secret key is required and has no insecure default. Changing it invalidates existing signed sessions.
+- CarFreeks generates a random signing key on first start and stores it in the persistent data volume. It protects sessions and form submissions; you do not need to generate or configure it. Keeping the data volume preserves the key across restarts and updates. Replacing the data volume creates a new key and signs out existing browser sessions; your account and password in the database are unchanged if that database is preserved.
 
 ## Development and tests
 
@@ -156,11 +146,10 @@ python -m venv .venv
 python -m pip install -r requirements.txt
 ```
 
-Set a secret key and start the web app (these examples use Linux/macOS syntax):
+Start the web app (these examples use Linux/macOS syntax):
 
 ```sh
 # Linux/macOS
-export CARFREEKS_SECRET_KEY="$(openssl rand -hex 32)"
 flask --app app:create_app run --debug
 ```
 

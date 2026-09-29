@@ -76,6 +76,52 @@ logger = logging.getLogger(__name__)
 def utc_now():
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
+
+def load_or_create_secret_key(data_dir, configured_secret=None):
+    secret_path = Path(data_dir) / "flask-secret-key"
+
+    def read_persisted_secret():
+        try:
+            secret = secret_path.read_text(encoding="utf-8").strip()
+        except FileNotFoundError:
+            raise
+        except OSError as error:
+            raise RuntimeError(
+                "Could not read the persisted application signing key."
+            ) from error
+        if not secret:
+            raise RuntimeError("The persisted application signing key is empty.")
+        return secret
+
+    try:
+        return read_persisted_secret()
+    except FileNotFoundError:
+        pass
+
+    secret = configured_secret or secrets.token_urlsafe(48)
+    try:
+        descriptor = os.open(
+            secret_path,
+            os.O_WRONLY | os.O_CREAT | os.O_EXCL,
+            0o600,
+        )
+    except FileExistsError:
+        return read_persisted_secret()
+    except OSError as error:
+        raise RuntimeError("Could not persist the application signing key.") from error
+
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as secret_file:
+            secret_file.write(secret)
+            secret_file.flush()
+            os.fsync(secret_file.fileno())
+        if os.name == "posix":
+            os.chmod(secret_path, 0o600)
+    except OSError as error:
+        secret_path.unlink(missing_ok=True)
+        raise RuntimeError("Could not persist the application signing key.") from error
+    return secret
+
 db = SQLAlchemy()
 login_manager = LoginManager()
 csrf = CSRFProtect()
@@ -427,7 +473,7 @@ def create_app(test_config=None):
     data_dir = Path(os.environ.get("CARFREEKS_DATA_DIR", BASE_DIR / "data"))
     database_url = os.environ.get("CARFREEKS_DATABASE_URL")
     app.config.from_mapping(
-        SECRET_KEY=os.environ.get("CARFREEKS_SECRET_KEY"),
+        SECRET_KEY=None,
         SQLALCHEMY_DATABASE_URI=database_url or f"sqlite:///{data_dir / 'carfreeks.db'}",
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         SQLALCHEMY_ENGINE_OPTIONS={"connect_args": {"check_same_thread": False}},
@@ -442,10 +488,11 @@ def create_app(test_config=None):
     if test_config:
         app.config.update(test_config)
 
-    if not app.config["SECRET_KEY"]:
-        raise RuntimeError("Set CARFREEKS_SECRET_KEY to a long, random secret.")
-
-    Path(app.config["CARFREEKS_DATA_DIR"]).mkdir(parents=True, exist_ok=True)
+    data_path = Path(app.config["CARFREEKS_DATA_DIR"])
+    data_path.mkdir(parents=True, exist_ok=True)
+    app.config["SECRET_KEY"] = load_or_create_secret_key(
+        data_path, app.config["SECRET_KEY"]
+    )
     Path(app.config["UPLOAD_FOLDER"]).mkdir(parents=True, exist_ok=True)
 
     db.init_app(app)

@@ -71,6 +71,33 @@ class CarFreeksTestCase(unittest.TestCase):
             )
         return response
 
+    def test_signing_key_is_generated_and_persisted_without_environment_setup(self):
+        data_dir = Path(self.temp_dir.name) / "automatic-key"
+        config = {
+            "TESTING": True,
+            "CARFREEKS_DATA_DIR": str(data_dir),
+            "SQLALCHEMY_DATABASE_URI": f"sqlite:///{(data_dir / 'test.db').as_posix()}",
+            "WTF_CSRF_ENABLED": False,
+        }
+        with patch.dict("os.environ", {"CARFREEKS_SECRET_KEY": "legacy-stack-setting"}):
+            first_app = create_app(config)
+            first_key = first_app.config["SECRET_KEY"]
+            self.assertGreaterEqual(len(first_key), 40)
+            self.assertNotEqual(first_key, "legacy-stack-setting")
+            self.assertEqual(
+                (data_dir / "flask-secret-key").read_text(encoding="utf-8"),
+                first_key,
+            )
+            with first_app.app_context():
+                db.session.remove()
+                db.engine.dispose()
+
+            second_app = create_app(config)
+            self.assertEqual(second_app.config["SECRET_KEY"], first_key)
+            with second_app.app_context():
+                db.session.remove()
+                db.engine.dispose()
+
     def test_first_run_owner_account_setup(self):
         response = self.client.get("/login")
         self.assertEqual(response.status_code, 200)
