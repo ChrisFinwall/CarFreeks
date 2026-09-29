@@ -55,7 +55,7 @@ Check service status with `docker compose ps`, or view logs with `docker compose
 | Variable | Default | Purpose |
 |---|---:|---|
 | `CARFREEKS_PORT` | `8060` | Host port used in the browser. Change it if another service already uses 8060. |
-| `CARFREEKS_BIND_ADDRESS` | `127.0.0.1` | Host interface to publish on. The default allows access only from the Docker host. Use `0.0.0.0` only if you intentionally need LAN access. |
+| `CARFREEKS_BIND_ADDRESS` | `0.0.0.0` | Host interface to publish on so LAN devices can connect. Restrict the port to your LAN with the host firewall; do not expose the plain HTTP port to the public internet. Set to `127.0.0.1` for Docker-host-only access. |
 | `CARFREEKS_COOKIE_SECURE` | `false` | Set to `true` when HTTPS is provided by a reverse proxy. |
 | `CARFREEKS_NOTIFICATION_INTERVAL_SECONDS` | `300` | Notification worker polling interval; minimum is 30 seconds. |
 
@@ -68,12 +68,12 @@ The published host port and the app's internal container port are different: for
 3. If the repository is private, configure Portainer's Git authentication with a GitHub token that has read-only access to the repository contents.
 4. Add stack environment variables:
    - `CARFREEKS_PORT`: `8060`, or another unused host port.
-   - `CARFREEKS_BIND_ADDRESS`: `0.0.0.0` if clients on your LAN need to connect; otherwise leave it unset for the safer loopback default.
+   - `CARFREEKS_BIND_ADDRESS`: defaults to `0.0.0.0` so clients on your LAN can connect; set to `127.0.0.1` for Docker-host-only access.
    - `CARFREEKS_COOKIE_SECURE`: `false` for trusted-LAN HTTP; set `true` only when HTTPS is configured.
 5. Deploy the stack and wait for the `carfreeks` service health check.
 6. From another device on the LAN, open `http://<ubuntu-server-LAN-IP>:8060` (for example, `http://192.168.1.29:8060`) and create your account.
 
-The previous `compose.yaml` filename is retained as an identical compatibility copy, so an existing Portainer stack configured with that path can continue pulling updates without changing its Compose path. New stacks should use `docker-compose.yml`.
+The previous `compose.yaml` filename is retained as an identical compatibility copy, so an existing Portainer stack configured with that path can continue pulling updates without changing its Compose path. New stacks should use `docker-compose.yml`. If Portainer has a saved `CARFREEKS_BIND_ADDRESS` override, remove it or set it to `0.0.0.0` for LAN access.
 
 If access from other LAN devices is enabled, allow the chosen port through the Ubuntu firewall only from your LAN. Do not expose plain HTTP directly to the public internet; use a VPN or configure an HTTPS reverse proxy. If a host port is already allocated, choose another `CARFREEKS_PORT` and use that port in the browser.
 
@@ -132,7 +132,7 @@ docker compose start carfreeks carfreeks-notifications
 - Passwords are stored as password hashes. They are never included in exports or app-level backups.
 - Discord webhook URLs are secrets. They are excluded from the Excel workbook but included in the private full-backup ZIP so Discord notifications can be restored.
 - Receipt files are limited to 10 MB each and supported formats are PDF, JPEG, PNG, WebP, and HEIC.
-- The default Docker binding is local-only (`127.0.0.1`). Enabling `0.0.0.0` makes the host port reachable on its network interfaces; use firewall rules and HTTPS/VPN practices appropriate to your network.
+- Docker publishes on the host's network interfaces by default (`0.0.0.0`) for LAN access. Restrict access to trusted devices using the host firewall; do not expose the plain HTTP port directly to the public internet. Set `CARFREEKS_BIND_ADDRESS=127.0.0.1` to limit access to the Docker host.
 - CarFreeks generates a random signing key on first start and stores it in the persistent data volume. It protects sessions and form submissions; you do not need to generate or configure it. Keeping the data volume preserves the key across restarts and updates. Replacing the data volume creates a new key and signs out existing browser sessions; your account and password in the database are unchanged if that database is preserved.
 
 ## Development and tests
