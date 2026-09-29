@@ -21,7 +21,7 @@ CarFreeks is a web app built with Flask and SQLite. Docker Compose runs the web 
 ### Requirements
 
 - Docker Engine and the Docker Compose plugin
-- A host port available for the app (default: `5060`)
+- A host port available for the app (default: `8060`)
 
 ### Start the app
 
@@ -46,7 +46,7 @@ CarFreeks is a web app built with Flask and SQLite. Docker Compose runs the web 
    docker compose -f docker-compose.yml up -d --build
    ```
 
-4. Open `http://localhost:5060` **on the computer running Docker** and select **Create an account**. The first account has owner access.
+4. Open `http://localhost:8060` **on the computer running Docker** and select **Create an account**. The first account has owner access.
 
 Check service status with `docker compose ps`, or view logs with `docker compose logs -f carfreeks carfreeks-notifications`. Wait for the web app health check to pass.
 
@@ -54,12 +54,12 @@ Check service status with `docker compose ps`, or view logs with `docker compose
 
 | Variable | Default | Purpose |
 |---|---:|---|
-| `CARFREEKS_PORT` | `5060` | Host port used in the browser. Change it if another service already uses 5060. |
+| `CARFREEKS_PORT` | `8060` | Host port used in the browser. Change it if another service already uses 8060. |
 | `CARFREEKS_BIND_ADDRESS` | `127.0.0.1` | Host interface to publish on. The default allows access only from the Docker host. Use `0.0.0.0` only if you intentionally need LAN access. |
 | `CARFREEKS_COOKIE_SECURE` | `false` | Set to `true` when HTTPS is provided by a reverse proxy. |
 | `CARFREEKS_NOTIFICATION_INTERVAL_SECONDS` | `300` | Notification worker polling interval; minimum is 30 seconds. |
 
-The published host port and the app's internal container port are different: for example, `5060:8080` means browse to port 5060, while the app listens on 8080 inside Docker.
+The published host port and the app's internal container port are different: for example, `8060:8080` means browse to port 8060, while the app listens on 8080 inside Docker.
 
 ## Deploy with Portainer
 
@@ -67,11 +67,11 @@ The published host port and the app's internal container port are different: for
 2. Use this repository URL: `https://github.com/ChrisFinwall/CarFreeks.git`, branch `main`, and Compose path `docker-compose.yml`.
 3. If the repository is private, configure Portainer's Git authentication with a GitHub token that has read-only access to the repository contents.
 4. Add stack environment variables:
-   - `CARFREEKS_PORT`: `5060`, or another unused host port.
+   - `CARFREEKS_PORT`: `8060`, or another unused host port.
    - `CARFREEKS_BIND_ADDRESS`: `0.0.0.0` if clients on your LAN need to connect; otherwise leave it unset for the safer loopback default.
    - `CARFREEKS_COOKIE_SECURE`: `false` for trusted-LAN HTTP; set `true` only when HTTPS is configured.
 5. Deploy the stack and wait for the `carfreeks` service health check.
-6. From another device on the LAN, open `http://<ubuntu-server-LAN-IP>:5060` (for example, `http://192.168.1.29:5060`) and create your account.
+6. From another device on the LAN, open `http://<ubuntu-server-LAN-IP>:8060` (for example, `http://192.168.1.29:8060`) and create your account.
 
 The previous `compose.yaml` filename is retained as an identical compatibility copy, so an existing Portainer stack configured with that path can continue pulling updates without changing its Compose path. New stacks should use `docker-compose.yml`.
 

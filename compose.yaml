@@ -5,7 +5,7 @@ services:
     container_name: carfreeks
     restart: unless-stopped
     ports:
-      - "${CARFREEKS_BIND_ADDRESS:-127.0.0.1}:${CARFREEKS_PORT:-5060}:8080"
+      - "${CARFREEKS_BIND_ADDRESS:-127.0.0.1}:${CARFREEKS_PORT:-8060}:8080"
     environment:
       CARFREEKS_DATA_DIR: /data
       CARFREEKS_COOKIE_SECURE: "${CARFREEKS_COOKIE_SECURE:-false}"
