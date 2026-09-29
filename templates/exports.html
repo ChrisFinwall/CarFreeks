@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Export and restore · CarFreeks{% endblock %}
+{% block content %}
+<div class="form-page">
+  <a class="back-link" href="{{ url_for('dashboard') }}">← Back to garage</a>
+  <div class="form-heading">
+    <div class="eyebrow">YOUR GARAGE, YOUR DATA</div>
+    <h1>Export and restore.</h1>
+    <p class="muted">Download your garage in one spreadsheet, or make a full backup for restoring CarFreeks later.</p>
+  </div>
+  <section class="section">
+    <div class="section-heading"><div><h2>Spreadsheet export</h2><p class="muted">One Excel workbook, with a separate tab for each kind of data.</p></div></div>
+    <p><a class="button button-primary" href="{{ url_for('export_workbook') }}">Download Excel workbook</a></p>
+    <p class="form-hint notification-note">Includes vehicles, service and repair history, mileage, values, reminders, household members, and non-secret settings. Spreadsheet exports do not include passwords, receipt files, invitation links, or the Discord webhook URL.</p>
+  </section>
+  {% if is_owner %}
+  <section class="section">
+    <div class="section-heading"><div><h2>Full backup</h2><p class="muted">A restorable archive of your household garage.</p></div></div>
+    <p><a class="button button-outline" href="{{ url_for('export_backup') }}">Download full backup</a></p>
+    <p class="form-hint notification-note">Includes your vehicles, all garage records, receipt files, household name, theme, and Discord webhook settings. It does not include account passwords or household member accounts. Keep this ZIP private: it contains personal information and your Discord webhook secret.</p>
+  </section>
+  <section class="section">
+    <div class="section-heading"><div><h2>Restore a backup</h2><p class="muted">Restore garage data from a CarFreeks full-backup ZIP.</p></div></div>
+    <form method="post" action="{{ url_for('restore_export') }}" enctype="multipart/form-data" class="form-card form-stack">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="field"><label for="backup-file">CarFreeks backup ZIP</label><input id="backup-file" name="backup_file" type="file" accept=".zip,application/zip" required><span class="form-hint">The restored vehicles and records will belong to your signed-in account. Your login and household member accounts are kept.</span></div>
+      <label class="field restore-confirm"><input name="confirm_replace" type="checkbox" value="yes" required><span>I understand this replaces all current household vehicles, records, and receipts with the backup.</span></label>
+      <div class="form-actions"><button class="button button-primary" type="submit">Restore and replace garage</button></div>
+    </form>
+  </section>
+  {% else %}
+  <p class="form-hint notification-note">Full backups and restore are available to the household owner because they include or replace private garage settings.</p>
+  {% endif %}
+</div>
+{% endblock %}

@@ -31,12 +31,12 @@
     {% set status = reminder_status(reminder, vehicle.current_odometer) %}
     <div class="reminder-row">
       <span class="reminder-dot {{ 'dot-overdue' if status == 'Overdue' else 'dot-soon' if status == 'Due soon' else '' }}"></span>
-      <span class="reminder-main"><strong>{{ reminder.title }}</strong><small>{{ reminder.notes or "No notes" }}</small></span>
+      <span class="reminder-main"><strong>{{ reminder.title }}</strong><small>{{ reminder.notes or "No notes" }}</small>{% if reminder.recurrence_days or reminder.recurrence_miles %}<small class="reminder-repeat">Repeats{% if reminder.recurrence_days %} every {{ reminder.recurrence_days }} days{% endif %}{% if reminder.recurrence_days and reminder.recurrence_miles %} and{% endif %}{% if reminder.recurrence_miles %} every {{ "{:,}".format(reminder.recurrence_miles) }} miles{% endif %}</small>{% endif %}</span>
       <span class="reminder-due">{{ reminder.due_date.strftime("%b %d, %Y") if reminder.due_date else "" }}{% if reminder.due_date and reminder.due_odometer is not none %} · {% endif %}{{ "{:,}".format(reminder.due_odometer) ~ " mi" if reminder.due_odometer is not none else "" }}</span>
       <span class="status status-{{ status|lower|replace(' ', '-') }}">{{ status }}</span>
       <form method="post" action="{{ url_for('reminder_toggle', vehicle_id=vehicle.id, reminder_id=reminder.id) }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button class="text-button" type="submit">{{ "Reopen" if reminder.completed else "Done" }}</button>
+        <button class="text-button" type="submit">{{ "Reopen" if reminder.completed else "Done · reschedule" if reminder.recurrence_days or reminder.recurrence_miles else "Done" }}</button>
       </form>
     </div>
     {% endfor %}

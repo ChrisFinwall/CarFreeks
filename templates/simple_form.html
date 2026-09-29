@@ -6,16 +6,19 @@
   <div class="form-heading"><div class="eyebrow">VEHICLE RECORD</div><h1>{{ heading }}</h1><p class="muted">Your information stays in your garage.</p></div>
   <form method="post" enctype="multipart/form-data" class="form-card form-stack">
     {{ form.hidden_tag() }}
-    {% for field in form if field.name not in ["csrf_token", "submit"] %}
+    {% for field in form if field.name not in ["csrf_token", "submit", "invite_token"] %}
       <div class="field">
         {{ field.label }}
         {% if field.type == "TextAreaField" %}{{ field(rows=4) }}
         {% elif field.type == "FileField" %}{{ field(accept=".pdf,.jpg,.jpeg,.png,.webp,.heic") }}
+        {% elif field.name == "recurrence_days" %}{{ field(placeholder="e.g. 180") }}
+        {% elif field.name == "recurrence_miles" %}{{ field(placeholder="e.g. 5,000") }}
         {% else %}{{ field() }}{% endif %}
         {% for error in field.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
       </div>
     {% endfor %}
-    <p class="form-hint">Receipt uploads: PDF or image, up to 10 MB.</p>
+    {% if form.receipt is defined %}<p class="form-hint">Receipt uploads: PDF or image, up to 10 MB.</p>{% endif %}
+    {% if form.recurrence_days is defined %}<p class="form-hint">Set the first due date and/or mileage above to repeat on that schedule. Choose either or both intervals for recurring service.</p>{% endif %}
     <div class="form-actions">{{ form.submit(class="button button-primary") }}<a class="button button-quiet" href="{{ back_url }}">Cancel</a></div>
   </form>
 </div>

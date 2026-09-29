@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Household · CarFreeks{% endblock %}
+{% block content %}
+<div class="form-page">
+  <a class="back-link" href="{{ url_for('dashboard') }}">← Back to garage</a>
+  <div class="form-heading">
+    <div class="eyebrow">YOUR FREEK HOUSEHOLD</div>
+    <h1>Household.</h1>
+    <p class="muted">Invite people to share this garage. Household members can see the same vehicles and service records.</p>
+  </div>
+  <section class="section">
+    <div class="section-heading"><div><h2>{{ current_user.household.name }}</h2><p class="muted">People with access to this garage</p></div></div>
+    <div class="compact-list">
+      {% for member in members %}
+      <div class="compact-row"><div><strong>{{ member.username }}</strong><small>{{ member.role|title }} · {{ member.theme|title }} theme</small></div></div>
+      {% endfor %}
+    </div>
+  </section>
+  {% if is_owner %}
+  <section class="section">
+    <div class="section-heading"><div><h2>Invite someone</h2><p class="muted">Create a private signup link. It expires after seven days and works once.</p></div></div>
+    <form method="post" action="{{ url_for('household_invite') }}" class="form-card form-stack">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="button button-primary" type="submit">Create invite link</button>
+      {% if new_invitation_url %}<div class="field"><label for="invite-link">Share this invite link</label><input id="invite-link" type="text" readonly value="{{ new_invitation_url }}" onclick="this.select()"><span class="form-hint">Anyone with this one-time link can join your household. Share it privately.</span></div>{% endif %}
+    </form>
+    {% if invitations %}
+    <div class="compact-list invite-list">
+      {% for invitation in invitations %}
+      <div class="compact-row"><div><strong>Pending invitation</strong><small>Expires {{ invitation.expires_at.strftime("%b %d, %Y") }}</small></div><form method="post" action="{{ url_for('household_invitation_revoke', invitation_id=invitation.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="text-button" type="submit">Revoke</button></form></div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </section>
+  <section class="section">
+    <div class="section-heading"><div><h2>Household settings</h2><p class="muted">Configure Discord maintenance notifications and the garage name.</p></div></div>
+    <form method="post" class="form-card form-stack">
+      {{ form.hidden_tag() }}
+      <div class="field">{{ form.name.label }}{{ form.name() }}{% for error in form.name.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</div>
+      <div class="field">{{ form.discord_webhook_url.label }}{{ form.discord_webhook_url(type="password", autocomplete="new-password", placeholder="https://discord.com/api/webhooks/...") }}<span class="form-hint">{% if current_user.household.discord_webhook_url %}A Discord webhook is saved. Leave this field blank to keep it.{% else %}Create a webhook for your Discord channel in the channel's Integrations settings.{% endif %} The URL is secret and will not be shown after you save it.</span>{% for error in form.discord_webhook_url.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</div>
+      {% if current_user.household.discord_webhook_url %}<div class="field">{{ form.remove_discord_webhook() }}{{ form.remove_discord_webhook.label }}</div>{% endif %}
+      <div class="form-actions">{{ form.submit(class="button button-primary") }}</div>
+    </form>
+    {% if current_user.household.discord_webhook_url %}
+    <form method="post" action="{{ url_for('household_test_discord') }}" class="form-actions webhook-test-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button button-outline" type="submit">Send test message</button></form>
+    {% endif %}
+    <p class="form-hint notification-note">Due reminders are checked by the CarFreeks worker, which sends at most one Discord message per reminder occurrence. Docker Compose runs this worker alongside the app.</p>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

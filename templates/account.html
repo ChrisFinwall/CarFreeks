@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Account settings · CarFreeks{% endblock %}
+{% block content %}
+<div class="form-page">
+  <a class="back-link" href="{{ url_for('dashboard') }}">← Back to garage</a>
+  <div class="form-heading"><div class="eyebrow">ACCOUNT SETTINGS</div><h1>Update your account.</h1><p class="muted">Change the owner username or password. Your vehicle records stay as they are.</p></div>
+  <form method="post" class="form-card form-stack">
+    {{ form.hidden_tag() }}
+    <div class="field">
+      {{ form.current_password.label }}
+      {{ form.current_password(autocomplete="current-password", autofocus=true) }}
+      {% for error in form.current_password.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+    </div>
+    <div class="field">
+      {{ form.username.label }}
+      {{ form.username(autocomplete="username") }}
+      {% for error in form.username.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+    </div>
+    <div class="field">
+      {{ form.password.label }}
+      {{ form.password(autocomplete="new-password", minlength=12) }}
+      <span class="form-hint">{{ form.password.description }}</span>
+      {% for error in form.password.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+    </div>
+    <div class="field">
+      {{ form.confirm_password.label }}
+      {{ form.confirm_password(autocomplete="new-password") }}
+      {% for error in form.confirm_password.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+    </div>
+    <div class="form-actions">{{ form.submit(class="button button-primary") }}<a class="button button-quiet" href="{{ url_for('dashboard') }}">Cancel</a></div>
+  </form>
+</div>
+{% endblock %}
