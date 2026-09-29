@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Sign in · CarFreeks{% endblock %}
+{% block content %}
+<section class="login-wrap">
+  <div class="login-card">
+    <div class="eyebrow">YOUR GARAGE, YOUR RECORDS</div>
+    <h1>Welcome back.</h1>
+    <p class="muted">Sign in to pick up where you left off.</p>
+    <form method="post" class="form-stack">
+      {{ form.hidden_tag() }}
+      <div class="field">
+        {{ form.username.label }}
+        {{ form.username(autocomplete="username", autofocus=true) }}
+        {% for error in form.username.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+      </div>
+      <div class="field">
+        {{ form.password.label }}
+        {{ form.password(autocomplete="current-password") }}
+        {% for error in form.password.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+      </div>
+      {{ form.submit(class="button button-primary button-wide") }}
+    </form>
+  </div>
+</section>
+{% endblock %}

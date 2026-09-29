@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}{{ heading }} · CarFreeks{% endblock %}
+{% block content %}
+<div class="form-page">
+  <a class="back-link" href="{{ url_for('dashboard') }}">← Back to garage</a>
+  <div class="form-heading"><div class="eyebrow">YOUR GARAGE</div><h1>{{ heading }}</h1><p class="muted">Add the details that make this vehicle yours.</p></div>
+  <form method="post" class="form-card form-stack">
+    {{ form.hidden_tag() }}
+    {% for field in [form.nickname] %}
+      <div class="field">{{ field.label }}{{ field(placeholder="e.g. Weekend cruiser") }}{% for error in field.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</div>
+    {% endfor %}
+    <div class="field-grid">
+      {% for field in [form.year, form.vehicle_type, form.make, form.model] %}
+        <div class="field">{{ field.label }}{{ field() }}{% for error in field.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</div>
+      {% endfor %}
+    </div>
+    <div class="field-grid">
+      {% for field in [form.vin, form.license_plate] %}
+        <div class="field">{{ field.label }}{{ field() }}{% for error in field.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</div>
+      {% endfor %}
+    </div>
+    <div class="form-actions">{{ form.submit(class="button button-primary") }}<a class="button button-quiet" href="{{ url_for('dashboard') }}">Cancel</a></div>
+  </form>
+</div>
+{% endblock %}

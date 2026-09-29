@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}{{ vehicle.nickname }} · CarFreeks{% endblock %}
+{% block content %}
+<a class="back-link" href="{{ url_for('dashboard') }}">← Back to garage</a>
+<section class="vehicle-hero">
+  <div>
+    <div class="eyebrow">{{ vehicle.vehicle_type|upper }}{% if vehicle.year %} · {{ vehicle.year }}{% endif %}</div>
+    <h1>{{ vehicle.nickname }}</h1>
+    <p class="muted">{{ [vehicle.make, vehicle.model]|select|join(" ") or "Add make and model" }}{% if vehicle.license_plate %} · {{ vehicle.license_plate }}{% endif %}</p>
+  </div>
+  <div class="hero-actions">
+    <a class="button button-quiet" href="{{ url_for('vehicle_edit', vehicle_id=vehicle.id) }}">Edit details</a>
+    <form method="post" action="{{ url_for('vehicle_delete', vehicle_id=vehicle.id) }}" onsubmit="return confirm('Delete this vehicle and all its records?')">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="button button-danger-quiet" type="submit">Delete</button>
+    </form>
+  </div>
+</section>
+
+<section class="metric-grid">
+  <article class="metric-card"><span class="stat-label">CURRENT ODOMETER</span><strong>{{ "{:,}".format(vehicle.current_odometer) if vehicle.current_odometer is not none else "—" }}</strong><span class="muted">miles</span><a href="{{ url_for('odometer_new', vehicle_id=vehicle.id) }}">＋ Add reading</a></article>
+  <article class="metric-card"><span class="stat-label">ESTIMATED VALUE</span><strong>{% if vehicle.latest_value %}${{ "{:,.2f}".format(vehicle.latest_value.amount) }}{% else %}—{% endif %}</strong><span class="muted">{% if vehicle.latest_value %}as of {{ vehicle.latest_value.valued_on.strftime("%b %d, %Y") }}{% else %}No value recorded{% endif %}</span><a href="{{ url_for('value_new', vehicle_id=vehicle.id) }}">＋ Update value</a></article>
+  <article class="metric-card"><span class="stat-label">SERVICE & REPAIRS</span><strong>{{ records|length }}</strong><span class="muted">records logged</span><a href="{{ url_for('service_new', vehicle_id=vehicle.id) }}">＋ Add service</a></article>
+</section>
+
+<section class="section detail-section">
+  <div class="section-heading"><div><h2>Maintenance reminders</h2><p class="muted">Keep the next service from sneaking up on you.</p></div><a class="button button-outline button-small" href="{{ url_for('reminder_new', vehicle_id=vehicle.id) }}">＋ Add reminder</a></div>
+  {% if reminders %}
+  <div class="reminder-list">
+    {% for reminder in reminders %}
+    {% set status = reminder_status(reminder, vehicle.current_odometer) %}
+    <div class="reminder-row">
+      <span class="reminder-dot {{ 'dot-overdue' if status == 'Overdue' else 'dot-soon' if status == 'Due soon' else '' }}"></span>
+      <span class="reminder-main"><strong>{{ reminder.title }}</strong><small>{{ reminder.notes or "No notes" }}</small></span>
+      <span class="reminder-due">{{ reminder.due_date.strftime("%b %d, %Y") if reminder.due_date else "" }}{% if reminder.due_date and reminder.due_odometer is not none %} · {% endif %}{{ "{:,}".format(reminder.due_odometer) ~ " mi" if reminder.due_odometer is not none else "" }}</span>
+      <span class="status status-{{ status|lower|replace(' ', '-') }}">{{ status }}</span>
+      <form method="post" action="{{ url_for('reminder_toggle', vehicle_id=vehicle.id, reminder_id=reminder.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="text-button" type="submit">{{ "Reopen" if reminder.completed else "Done" }}</button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}<div class="inline-empty">No reminders yet. Add one for your next oil change, inspection, or other service.</div>{% endif %}
+</section>
+
+<div class="content-columns">
+  <section class="section">
+    <div class="section-heading"><div><h2>Service & repairs</h2><p class="muted">Care records and receipts</p></div><a class="button button-outline button-small" href="{{ url_for('service_new', vehicle_id=vehicle.id) }}">＋ Add record</a></div>
+    {% if records %}
+    <div class="record-list">
+      {% for record in records %}
+      <article class="record-row">
+        <span class="record-icon">{{ "R" if record.category == "Repair" else "M" }}</span>
+        <div class="record-main"><div class="record-title-line"><strong>{{ record.title }}</strong><span class="pill">{{ record.category }}</span></div><p class="muted">{{ record.completed_on.strftime("%b %d, %Y") }}{% if record.odometer is not none %} · {{ "{:,}".format(record.odometer) }} mi{% endif %}</p>{% if record.notes %}<p class="record-notes">{{ record.notes }}</p>{% endif %}{% if record.receipt_storage_name %}<a class="receipt-link" href="{{ url_for('receipt_download', record_id=record.id) }}">↓ {{ record.receipt_filename }}</a>{% endif %}</div>
+        <strong class="record-cost">${{ "{:,.2f}".format(record.cost) }}</strong>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}<div class="inline-empty">No work recorded yet. Add maintenance or repair work to build your service history.</div>{% endif %}
+  </section>
+
+  <div class="side-column">
+    <section class="section">
+      <div class="section-heading"><div><h2>Value history</h2><p class="muted">Your manual estimates</p></div><a class="button button-outline button-small" href="{{ url_for('value_new', vehicle_id=vehicle.id) }}">＋ Add</a></div>
+      {% if values %}
+      <div class="compact-list">
+        {% for entry in values %}
+        <div class="compact-row"><div><strong>${{ "{:,.2f}".format(entry.amount) }}</strong><small>{{ entry.valued_on.strftime("%b %d, %Y") }}{% if entry.source %} · {{ entry.source }}{% endif %}</small></div>{% if entry.notes %}<span class="muted note-truncate">{{ entry.notes }}</span>{% endif %}</div>
+        {% endfor %}
+      </div>
+      {% else %}<div class="inline-empty">Add a value estimate to start a history.</div>{% endif %}
+    </section>
+
+    <section class="section">
+      <div class="section-heading"><div><h2>Mileage history</h2><p class="muted">Odometer readings</p></div><a class="button button-outline button-small" href="{{ url_for('odometer_new', vehicle_id=vehicle.id) }}">＋ Add</a></div>
+      {% if odometer_entries %}
+      <div class="compact-list">
+        {% for entry in odometer_entries %}
+        <div class="compact-row"><div><strong>{{ "{:,}".format(entry.reading) }} mi</strong><small>{{ entry.recorded_on.strftime("%b %d, %Y") }}</small></div>{% if entry.note %}<span class="muted note-truncate">{{ entry.note }}</span>{% endif %}</div>
+        {% endfor %}
+      </div>
+      {% else %}<div class="inline-empty">Log readings as you go to keep mileage up to date.</div>{% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}

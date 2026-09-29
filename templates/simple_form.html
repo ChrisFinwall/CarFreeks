@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}{{ heading }} · CarFreeks{% endblock %}
+{% block content %}
+<div class="form-page">
+  <a class="back-link" href="{{ back_url }}">← Back</a>
+  <div class="form-heading"><div class="eyebrow">VEHICLE RECORD</div><h1>{{ heading }}</h1><p class="muted">Your information stays in your garage.</p></div>
+  <form method="post" enctype="multipart/form-data" class="form-card form-stack">
+    {{ form.hidden_tag() }}
+    {% for field in form if field.name not in ["csrf_token", "submit"] %}
+      <div class="field">
+        {{ field.label }}
+        {% if field.type == "TextAreaField" %}{{ field(rows=4) }}
+        {% elif field.type == "FileField" %}{{ field(accept=".pdf,.jpg,.jpeg,.png,.webp,.heic") }}
+        {% else %}{{ field() }}{% endif %}
+        {% for error in field.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+      </div>
+    {% endfor %}
+    <p class="form-hint">Receipt uploads: PDF or image, up to 10 MB.</p>
+    <div class="form-actions">{{ form.submit(class="button button-primary") }}<a class="button button-quiet" href="{{ back_url }}">Cancel</a></div>
+  </form>
+</div>
+{% endblock %}

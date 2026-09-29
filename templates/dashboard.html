@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Your garage · CarFreeks{% endblock %}
+{% block content %}
+<section class="hero">
+  <div>
+    <div class="eyebrow">YOUR FREEDOM TO KEEP TRACK</div>
+    <h1>Your garage.</h1>
+    <p class="muted">Every vehicle, every service, every mile — all in one place.</p>
+  </div>
+  <a class="button button-primary" href="{{ url_for('vehicle_new') }}">＋ Add a vehicle</a>
+</section>
+
+<section class="section">
+  <div class="section-heading">
+    <div><h2>My vehicles</h2><p class="muted">{{ vehicles|length }} in your garage</p></div>
+  </div>
+  {% if vehicles %}
+  <div class="vehicle-grid">
+    {% for vehicle in vehicles %}
+    <a class="vehicle-card" href="{{ url_for('vehicle_detail', vehicle_id=vehicle.id) }}">
+      <div class="vehicle-card-top">
+        <span class="vehicle-icon">↗</span>
+        <span class="pill">{{ vehicle.vehicle_type }}</span>
+      </div>
+      <h3>{{ vehicle.nickname }}</h3>
+      <p class="vehicle-subtitle">{{ [vehicle.year, vehicle.make, vehicle.model]|select|join(" ") or "Add vehicle details" }}</p>
+      <div class="vehicle-stats">
+        <div><span class="stat-label">MILEAGE</span><strong>{{ "{:,}".format(vehicle.current_odometer) if vehicle.current_odometer is not none else "—" }} <small>{{ "mi" }}</small></strong></div>
+        <div><span class="stat-label">EST. VALUE</span><strong>{% if vehicle.latest_value %}${{ "{:,.0f}".format(vehicle.latest_value.amount) }}{% else %}—{% endif %}</strong></div>
+      </div>
+      <span class="card-link">Open vehicle <span aria-hidden="true">→</span></span>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon">＋</div><h3>Start your garage</h3>
+    <p class="muted">Add your first vehicle to start keeping track of its care and value.</p>
+    <a class="button button-primary" href="{{ url_for('vehicle_new') }}">Add your first vehicle</a>
+  </div>
+  {% endif %}
+</section>
+
+{% if reminders %}
+<section class="section">
+  <div class="section-heading"><div><h2>Coming up</h2><p class="muted">Maintenance reminders across your garage</p></div></div>
+  <div class="reminder-list">
+    {% for vehicle, reminder, status in reminders %}
+    <a class="reminder-row" href="{{ url_for('vehicle_detail', vehicle_id=vehicle.id) }}">
+      <span class="reminder-dot {{ 'dot-overdue' if status == 'Overdue' else 'dot-soon' if status == 'Due soon' else '' }}"></span>
+      <span class="reminder-main"><strong>{{ reminder.title }}</strong><small>{{ vehicle.nickname }}</small></span>
+      <span class="reminder-due">{{ reminder.due_date.strftime("%b %d, %Y") if reminder.due_date else "" }}{% if reminder.due_date and reminder.due_odometer %} · {% endif %}{{ "{:,}".format(reminder.due_odometer) ~ " mi" if reminder.due_odometer is not none else "" }}</span>
+      <span class="status status-{{ status|lower|replace(' ', '-') }}">{{ status }}</span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}
